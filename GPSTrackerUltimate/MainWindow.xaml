@@ -1,0 +1,38 @@
+﻿<Window x:Class="GPSTrackerUltimate.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:viewModels="clr-namespace:GPSTrackerUltimate.ViewModels"
+        xmlns:gpsTrackerUltimate="clr-namespace:GPSTrackerUltimate"
+        Title="MainWindow" Height="450" Width="800">
+    <Window.Resources>
+        <gpsTrackerUltimate:GridToPixelConverter x:Key="GridToPixel"/>
+    </Window.Resources>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <ItemsControl ItemsSource="{Binding (viewModels:MainViewModel.Tiles)}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas Width="8160" Height="8160"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+
+            <ItemsControl.ItemContainerStyle>
+                <Style>
+                    <Setter Property="Canvas.Left" Value="{Binding X, Converter={StaticResource GridToPixel}}" />
+                    <Setter Property="Canvas.Top" Value="{Binding Y, Converter={StaticResource GridToPixel}}" />
+                </Style>
+            </ItemsControl.ItemContainerStyle>
+
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Background="Transparent">
+                        <Image Width="32"
+                               Height="32"
+                               Source="{Binding ImageTileCombine}"
+                               IsHitTestVisible="False" />
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </ScrollViewer>
+</Window>
