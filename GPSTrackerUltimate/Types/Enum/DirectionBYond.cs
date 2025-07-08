@@ -9,12 +9,12 @@ namespace GPSTrackerUltimate.Types.Enum
         /// <summary>
         /// Southern (typically downward) direction
         /// </summary>
-        South = 1,
+        South = 2,
 
         /// <summary>
         /// Northern (typically upwards) direction
         /// </summary>
-        North = 2,
+        North = 1,
 
         /// <summary>
         /// Eastern (typically right) direction

@@ -13,7 +13,7 @@ namespace GPSTrackerUltimate.Types
 
     public List<Tile> Parse(string path)
     {
-        var lines = File.ReadAllLines(path : path);
+        string[] lines = File.ReadAllLines(path : path);
         ParseTemplates(lines : lines);
         ParseTileGrid(lines : lines);
         return tiles;
@@ -24,32 +24,32 @@ namespace GPSTrackerUltimate.Types
         string currentKey = null;
         List<(string path, Dictionary<string, string>)> currentList = null;
 
-        var templateHeader = new Regex("^\"(?<key>[a-zA-Z0-9_]+)\"\\s*=\\s*\\(");
-        var simplePathLine = new Regex(@"^\s*(?<path>/[^\s,{]+)\s*,?");
-        var objectWithVarsStart = new Regex(@"^\s*(?<path>/[^\s,{]+)\s*\{");
-        var keyValueLine = new Regex(pattern : @"^\s*(?<key>[a-zA-Z0-9_]+)\s*=\s*""?(?<value>[^""}]+)""?,?");
+        Regex templateHeader = new Regex(pattern : "^\"(?<key>[a-zA-Z0-9_]+)\"\\s*=\\s*\\(");
+        Regex simplePathLine = new Regex(pattern : @"^\s*(?<path>/[^\s,{]+)\s*,?");
+        Regex objectWithVarsStart = new Regex(pattern : @"^\s*(?<path>/[^\s,{]+)\s*\{");
+        Regex keyValueLine = new Regex(pattern : @"^\s*(?<key>[a-zA-Z0-9_]+)\s*=\s*""?(?<value>[^""}]+)""?,?");
         
         Dictionary<string, string> currentOverrides = null;
         string currentPath = null;
         bool insideOverrideBlock = false;
 
-        foreach (var line in lines)
+        foreach (string line in lines)
         {
-            if (templateHeader.IsMatch(line))
+            if (templateHeader.IsMatch(input : line))
             {
                 if (currentKey != null)
                 {
-                    templates[currentKey] = currentList;
+                    templates[key : currentKey] = currentList;
                 }
 
-                currentKey = templateHeader.Match(line).Groups["key"].Value;
+                currentKey = templateHeader.Match(input : line).Groups[groupname : "key"].Value;
                 currentList = new List<(string, Dictionary<string, string>)>();
                 continue;
             }
 
             if (line.Trim() == ")" && currentKey != null)
             {
-                templates[currentKey] = currentList;
+                templates[key : currentKey] = currentList;
                 currentKey = null;
                 continue;
             }
@@ -58,41 +58,41 @@ namespace GPSTrackerUltimate.Types
             {
                 if (insideOverrideBlock)
                 {
-                    if (line.Contains("}"))
+                    if (line.Contains(value : "}"))
                     {
                         // конец блока
-                        currentList.Add((currentPath, currentOverrides));
+                        currentList.Add(item : (currentPath, currentOverrides));
                         insideOverrideBlock = false;
                         currentPath = null;
                         currentOverrides = null;
                     }
                     else
                     {
-                        var kvMatch = keyValueLine.Match(line);
+                        Match kvMatch = keyValueLine.Match(input : line);
                         if (kvMatch.Success)
                         {
-                            string key = kvMatch.Groups["key"].Value.Trim();
-                            string value = kvMatch.Groups["value"].Value.Trim();
-                            currentOverrides[key] = value;
+                            string key = kvMatch.Groups[groupname : "key"].Value.Trim();
+                            string value = kvMatch.Groups[groupname : "value"].Value.Trim();
+                            currentOverrides[key : key] = value;
                         }
                     }
                 }
                 else
                 {
-                    var objectWithVarsMatch = objectWithVarsStart.Match(line);
+                    Match objectWithVarsMatch = objectWithVarsStart.Match(input : line);
                     if (objectWithVarsMatch.Success)
                     {
-                        currentPath = objectWithVarsMatch.Groups["path"].Value;
+                        currentPath = objectWithVarsMatch.Groups[groupname : "path"].Value;
                         currentOverrides = new Dictionary<string, string>();
                         insideOverrideBlock = true;
                     }
                     else
                     {
-                        var simpleMatch = simplePathLine.Match(line);
+                        Match simpleMatch = simplePathLine.Match(input : line);
                         if (simpleMatch.Success)
                         {
-                            string path = simpleMatch.Groups["path"].Value;
-                            currentList.Add((path, new Dictionary<string, string>()));
+                            string path = simpleMatch.Groups[groupname : "path"].Value;
+                            currentList.Add(item : (path, new Dictionary<string, string>()));
                         }
                     }
                 }
@@ -102,16 +102,16 @@ namespace GPSTrackerUltimate.Types
 
     private void ParseTileGrid(string[] lines)
     {
-        var tileBlockStart = new Regex(pattern : @"^\((\d+),(\d+),(\d+)\)\s*=\s*\{\s*""");
+        Regex tileBlockStart = new Regex(pattern : @"^\((\d+),(\d+),(\d+)\)\s*=\s*\{\s*""");
         int x = 0, y = 0, z = 0;
         bool readingBlock = false;
         List<string> currentBlock = new();
 
-        foreach (var line in lines)
+        foreach (string line in lines)
         {
             if (tileBlockStart.IsMatch(input : line))
             {
-                var match = tileBlockStart.Match(input : line);
+                Match match = tileBlockStart.Match(input : line);
                 x = int.Parse(s : match.Groups[groupnum : 1].Value);
                 y = int.Parse(s : match.Groups[groupnum : 2].Value);
                 z = int.Parse(s : match.Groups[groupnum : 3].Value);
@@ -127,36 +127,38 @@ namespace GPSTrackerUltimate.Types
 
                     for (int row = 0; row < currentBlock.Count; row++)
                     {
-                        string key = currentBlock[row].Trim();
-                        if (!templates.ContainsKey(key))
+                        string key = currentBlock[index : row].Trim();
+                        if (!templates.ContainsKey(key : key))
+                        {
                             continue;
+                        }
 
-                        var tile = new Tile
+                        Tile tile = new Tile
                         {
                             X = x,
                             Y = row + 1,
                             Z = z
                         };
 
-                        var pathList = templates[key];
+                        List<(string path, Dictionary<string, string> overrides)> pathList = templates[key : key];
                         for (int i = 0; i < pathList.Count; i++)
                         {
-                            tile.PathContent[i] = pathList[i].path;
+                            tile.PathContent[key : i] = pathList[index : i].path;
 
                             // Добавим переопределения
-                            foreach (var pair in pathList[i].Item2)
+                            foreach (KeyValuePair<string, string> pair in pathList[index : i].Item2)
                             {
-                                tile.PathOverrides[$"{i}.{pair.Key}"] = pair.Value;
+                                tile.PathOverrides[key : $"{i}.{pair.Key}"] = pair.Value;
                             }
                         }
 
-                        tiles.Add(tile);
+                        tiles.Add(item : tile);
                     }
 
                     continue;
                 }
 
-                currentBlock.Add(line);
+                currentBlock.Add(item : line);
             }
         }
     }

@@ -15,16 +15,16 @@ namespace GPSTrackerUltimate.Types
         /// </summary>
         public static List<string> ParseIncludedDmFiles(string dmePath)
         {
-            var result = new List<string>();
-            var dmeDir = Path.GetDirectoryName(path : dmePath)!;
+            List<string>? result = new List<string>();
+            string? dmeDir = Path.GetDirectoryName(path : dmePath)!;
 
-            foreach (var line in File.ReadLines(path : dmePath))
+            foreach (string? line in File.ReadLines(path : dmePath))
             {
-                var match = IncludeRegex.Match(input : line);
+                Match? match = IncludeRegex.Match(input : line);
                 if (match.Success)
                 {
-                    var relativePath = match.Groups[groupnum : 1].Value.Replace(oldChar : '\\', newChar : Path.DirectorySeparatorChar);
-                    var fullPath = Path.Combine(path1 : dmeDir, path2 : relativePath);
+                    string? relativePath = match.Groups[groupnum : 1].Value.Replace(oldChar : '\\', newChar : Path.DirectorySeparatorChar);
+                    string? fullPath = Path.Combine(path1 : dmeDir, path2 : relativePath);
                     if (File.Exists(path : fullPath))
                     {
                         result.Add(item : fullPath);

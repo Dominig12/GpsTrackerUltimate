@@ -15,16 +15,16 @@ namespace GPSTrackerUltimate.Types
         /// </summary>
         public static Dictionary<string, DmObject> ParseObjectsFromFiles(IEnumerable<string> dmFilePaths)
         {
-            var allObjects = new Dictionary<string, DmObject>();
+            Dictionary<string, DmObject>? allObjects = new Dictionary<string, DmObject>();
             DmObject? current = null;
 
-            foreach (var file in dmFilePaths)
+            foreach (string? file in dmFilePaths)
             {
-                var lines = File.ReadAllLines(path : file);
+                string[]? lines = File.ReadAllLines(path : file);
 
-                foreach (var rawLine in lines)
+                foreach (string? rawLine in lines)
                 {
-                    var line = rawLine.Trim();
+                    string? line = rawLine.Trim();
 
                     if (string.IsNullOrWhiteSpace(value : line) || line.StartsWith(value : "//"))
                     {
@@ -33,20 +33,20 @@ namespace GPSTrackerUltimate.Types
 
                     if (line.StartsWith(value : "/"))
                     {
-                        var tokens = line.Split(separator : new[] { ' ', '\t', '(', '=', ':', ';' }, options : StringSplitOptions.RemoveEmptyEntries);
+                        string[]? tokens = line.Split(separator : new[] { ' ', '\t', '(', '=', ':', ';' }, options : StringSplitOptions.RemoveEmptyEntries);
                         if (tokens.Length == 0)
                         {
                             continue;
                         }
 
-                        var potentialPath = tokens[0];
+                        string? potentialPath = tokens[0];
 
-                        if (ObjectHeaderRegex.IsMatch(potentialPath))
+                        if (ObjectHeaderRegex.IsMatch(input : potentialPath))
                         {
-                            var fullPath = potentialPath;
-                            var parent = "/" + string.Join("/", fullPath.Split('/').Skip(1).SkipLast(1));
+                            string? fullPath = potentialPath;
+                            string? parent = "/" + string.Join(separator : "/", values : fullPath.Split(separator : '/').Skip(count : 1).SkipLast(count : 1));
 
-                            if (allObjects.TryGetValue(fullPath, out var existing))
+                            if (allObjects.TryGetValue(key : fullPath, value : out DmObject? existing))
                             {
                                 // Добавляем или перезаписываем переменные
                                 current = existing;
@@ -59,7 +59,7 @@ namespace GPSTrackerUltimate.Types
                                     Path = fullPath,
                                     ParentPath = parent
                                 };
-                                allObjects[fullPath] = current;
+                                allObjects[key : fullPath] = current;
                             }
 
                             continue;
@@ -68,31 +68,33 @@ namespace GPSTrackerUltimate.Types
 
                     if (current != null)
                     {
-                        var match = VariableAssignmentRegex.Match(input : line);
+                        Match? match = VariableAssignmentRegex.Match(input : line);
                         if (match.Success)
                         {
-                            var name = match.Groups[groupnum : 1].Value.Trim();
-                            var rawValue = match.Groups[2].Value.Trim().TrimEnd(';');
+                            string? name = match.Groups[groupnum : 1].Value.Trim();
+                            string? rawValue = match.Groups[groupnum : 2].Value.Trim().TrimEnd(trimChar : ';');
 
 // Удаляем комментарии, если они не внутри строки
-                            int commentIndex = rawValue.IndexOf("//");
+                            int commentIndex = rawValue.IndexOf(value : "//");
                             if (commentIndex >= 0)
                             {
                                 // Убедимся, что // не находится внутри кавычек
                                 bool insideQuotes = false;
                                 for (int i = 0; i < commentIndex; i++)
                                 {
-                                    if (rawValue[i] == '"')
+                                    if (rawValue[index : i] == '"')
+                                    {
                                         insideQuotes = !insideQuotes;
+                                    }
                                 }
 
                                 if (!insideQuotes)
                                 {
-                                    rawValue = rawValue.Substring(0, commentIndex).TrimEnd();
+                                    rawValue = rawValue.Substring(startIndex : 0, length : commentIndex).TrimEnd();
                                 }
                             }
 
-                            current.Variables[name] = rawValue;
+                            current.Variables[key : name] = rawValue;
                         }
                     }
                 }
@@ -101,9 +103,9 @@ namespace GPSTrackerUltimate.Types
             }
 
             // Построение дерева
-            foreach (var obj in allObjects.Values)
+            foreach (DmObject? obj in allObjects.Values)
             {
-                if (allObjects.TryGetValue(key : obj.ParentPath, value : out var parent))
+                if (allObjects.TryGetValue(key : obj.ParentPath, value : out DmObject? parent))
                 {
                     parent.Children.Add(item : obj);
                 }
@@ -119,9 +121,9 @@ namespace GPSTrackerUltimate.Types
             string typePath,
             Dictionary<string, DmObject> allObjects)
         {
-            if (allObjects.TryGetValue(key : typePath, value : out var obj))
+            if (allObjects.TryGetValue(key : typePath, value : out DmObject? obj))
             {
-                var vars = obj.GetAllResolvedVariables(allObjects : allObjects);
+                Dictionary<string, string>? vars = obj.GetAllResolvedVariables(allObjects : allObjects);
                 return (obj, vars);
             }
 

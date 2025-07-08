@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -21,37 +22,53 @@ namespace GPSTrackerUltimate.Types.Map
         {
             tile.TileContent.Clear();
 
-            var images = new List<BitmapImage>();
+            List<BitmapImage> images = new List<BitmapImage>();
 
-            foreach (var kv in tile.PathContent.OrderByDescending(keySelector : p => p.Key))
+            foreach (KeyValuePair<int, string> kv in tile.PathContent.OrderByDescending(keySelector : p => p.Key))
             {
-                var layer = kv.Key;
-                var typePath = kv.Value;
+                int layer = kv.Key;
+                string typePath = kv.Value;
 
                 if (typePath.StartsWith(value : "/area"))
+                {
                     continue;
+                }
 
-                var objResult = DmParser.FindObjectWithResolvedVars(typePath : typePath, allObjects : allObjects);
+                (DmObject Obj, Dictionary<string, string> ResolvedVars)? objResult = DmParser.FindObjectWithResolvedVars(typePath : typePath, allObjects : allObjects);
                 if (objResult == null)
+                {
                     continue;
+                }
 
-                var (_, vars) = objResult.Value;
+                (_, Dictionary<string, string> vars) = objResult.Value;
 
                 // === Ищем переопределения, если есть ===
-                string icon = vars.TryGetValue(key : "icon", value : out var iconVal) ? iconVal.Trim(trimChar : '\'') : string.Empty;
-                string iconState = vars.TryGetValue(key : "icon_state", value : out var iconStateVal) ? iconStateVal.Trim(trimChar : '"') : string.Empty;
-                string direction = vars.TryGetValue(key : "dir", value : out var directionVal) ? directionVal.Trim(trimChar : '"') : string.Empty;
+                string icon = vars.TryGetValue(key : "icon", value : out string? iconVal) ? iconVal.Trim(trimChar : '\'') : string.Empty;
+                string iconState = vars.TryGetValue(key : "icon_state", value : out string? iconStateVal) ? iconStateVal.Trim(trimChar : '"') : string.Empty;
+                string direction = vars.TryGetValue(key : "dir", value : out string? directionVal) ? directionVal.Trim(trimChar : '"') : string.Empty;
+                string name = vars.TryGetValue(key : "name", value : out string? nameVal) ? nameVal.Trim(trimChar : '\'') : string.Empty;
+
+                if ( !string.IsNullOrWhiteSpace( value : name ) )
+                {
+                    tile.NameContent.Add(item : name);
+                }
 
                 string layerPrefix = $"{layer}.";
 
-                if (tile.PathOverrides.TryGetValue(key : layerPrefix + "icon", value : out var overrideIcon))
+                if (tile.PathOverrides.TryGetValue(key : layerPrefix + "icon", value : out string? overrideIcon))
+                {
                     icon = overrideIcon.Trim(trimChar : '\'');
+                }
 
-                if (tile.PathOverrides.TryGetValue(key : layerPrefix + "icon_state", value : out var overrideIconState))
+                if (tile.PathOverrides.TryGetValue(key : layerPrefix + "icon_state", value : out string? overrideIconState))
+                {
                     iconState = overrideIconState.Trim(trimChar : '"');
-                
-                if (tile.PathOverrides.TryGetValue(key : layerPrefix + "dir", value : out var overrideDirection))
+                }
+
+                if (tile.PathOverrides.TryGetValue(key : layerPrefix + "dir", value : out string? overrideDirection))
+                {
                     direction = overrideDirection.Trim(trimChar : '"');
+                }
 
                 // === Проверка ===
                 if (string.IsNullOrWhiteSpace(value : icon))
@@ -71,7 +88,7 @@ namespace GPSTrackerUltimate.Types.Map
                 // === Загрузка изображения ===
                 try
                 {
-                    var image = await ImageHelper.GetIconDmi(icon : icon, iconState : iconState, direction : ConverterDirection.ConvertByondDirToDmi( dir : directionE ));
+                    BitmapImage image = await ImageHelper.GetIconDmi(icon : icon, iconState : iconState, direction : ConverterDirection.ConvertByondDirToDmi( dir : directionE ));
                     tile.TileContent[key : layer] = image;
                     images.Add(item : image);
                 }
@@ -83,20 +100,20 @@ namespace GPSTrackerUltimate.Types.Map
 
             tile.ImageTileCombine = CombineImages(images : images);
             
-            var tooltipBuilder = new System.Text.StringBuilder();
+            StringBuilder tooltipBuilder = new System.Text.StringBuilder();
 
-            foreach (var kv in tile.PathContent.OrderByDescending(p => p.Key))
+            foreach (KeyValuePair<int, string> kv in tile.PathContent.OrderByDescending(keySelector : p => p.Key))
             {
-                var layer = kv.Key;
-                var typePath = kv.Value;
+                int layer = kv.Key;
+                string typePath = kv.Value;
 
-                if (allObjects.TryGetValue(typePath, out var obj))
+                if (allObjects.TryGetValue(key : typePath, value : out DmObject? obj))
                 {
-                    tooltipBuilder.AppendLine($"{typePath}");
+                    tooltipBuilder.AppendLine(handler : $"{typePath}");
 
-                    foreach (var (key, val) in obj.GetAllResolvedVariables(allObjects))
+                    foreach ((string key, string val) in obj.GetAllResolvedVariables(allObjects : allObjects))
                     {
-                        tooltipBuilder.AppendLine($"  {key} = {val}");
+                        tooltipBuilder.AppendLine(handler : $"  {key} = {val}");
                     }
 
                     tooltipBuilder.AppendLine();
@@ -113,26 +130,37 @@ namespace GPSTrackerUltimate.Types.Map
         {
             const int size = 32;
 
-            var drawingVisual = new DrawingVisual();
-            using (var context = drawingVisual.RenderOpen())
+            DrawingVisual drawingVisual = new DrawingVisual();
+            using (DrawingContext context = drawingVisual.RenderOpen())
             {
-                foreach (var img in images)
+                foreach (BitmapImage img in images)
                 {
+                    try
+                    {
+                        if (img == null || img.PixelWidth == 0 || img.PixelHeight == 0)
+                        {
+                            continue;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
                     context.DrawImage(imageSource : img, rectangle : new Rect(x : 0, y : 0, width : size, height : size));
                 }
             }
 
-            var rtb = new RenderTargetBitmap(pixelWidth : size, pixelHeight : size, dpiX : 96, dpiY : 96, pixelFormat : PixelFormats.Pbgra32);
+            RenderTargetBitmap rtb = new RenderTargetBitmap(pixelWidth : size, pixelHeight : size, dpiX : 96, dpiY : 96, pixelFormat : PixelFormats.Pbgra32);
             rtb.Render(visual : drawingVisual);
 
             // Преобразуем в BitmapImage
-            var encoder = new PngBitmapEncoder();
+            PngBitmapEncoder encoder = new PngBitmapEncoder();
             encoder.Frames.Add(item : BitmapFrame.Create(source : rtb));
-            using var stream = new MemoryStream();
+            using MemoryStream stream = new MemoryStream();
             encoder.Save(stream : stream);
             stream.Position = 0;
 
-            var final = new BitmapImage();
+            BitmapImage final = new BitmapImage();
             final.BeginInit();
             final.CacheOption = BitmapCacheOption.OnLoad;
             final.StreamSource = stream;
@@ -140,6 +168,51 @@ namespace GPSTrackerUltimate.Types.Map
             final.Freeze();
 
             return final;
+        }
+        
+        public static async Task DrawImageOnWriteableBitmap(
+            WriteableBitmap? target,
+            BitmapImage? source,
+            int x,
+            int y)
+        {
+            try
+            {
+                if (source == null || target == null)
+                {
+                    return;
+                }
+
+                // Конвертируем BitmapImage в формат Pbgra32
+                FormatConvertedBitmap converted = new FormatConvertedBitmap(source : source, destinationFormat : PixelFormats.Pbgra32, destinationPalette : null, alphaThreshold : 0);
+                converted.Freeze();
+
+                WriteableBitmap wb = new WriteableBitmap(source : converted);
+                wb.Freeze();
+
+                int width = wb.PixelWidth;
+                int height = wb.PixelHeight;
+                int stride = width * 4;
+                byte[] pixels = new byte[height * stride];
+
+                wb.CopyPixels(pixels : pixels, stride : stride, offset : 0);
+
+                await Application.Current.Dispatcher.InvokeAsync(callback : () =>
+                {
+                    target.Lock();
+                    target.WritePixels(
+                        sourceRect : new Int32Rect(x : x, y : y, width : width, height : height),
+                        pixels : pixels,
+                        stride : stride,
+                        offset : 0);
+                    target.AddDirtyRect(dirtyRect : new Int32Rect(x : x, y : y, width : width, height : height));
+                    target.Unlock();
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(value : $"Ошибка DrawImageOnWriteableBitmap: {ex.Message}");
+            }
         }
     }
 

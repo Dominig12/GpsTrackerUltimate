@@ -21,6 +21,8 @@ namespace GPSTrackerUltimate.Types.Map
 
         public Dictionary<int, string> PathContent { get; set; } = new Dictionary<int, string>();
         
+        public List<string> NameContent { get; set; } = new List<string>();
+        
         public Dictionary<string, string> PathOverrides { get; set; } = new();
         
         private string _tooltipText = string.Empty;

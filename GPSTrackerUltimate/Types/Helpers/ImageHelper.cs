@@ -17,7 +17,7 @@ namespace GPSTrackerUltimate.Types.Helpers
         {
             try
             {
-                using var file = new DMIFile(
+                using DMIFile file = new DMIFile(
                     file : $"C:\\Users\\DaniilAliskandarov\\Documents\\GitHub\\TauCetiClassic\\{icon}" );
 
                 List<DMIState> state = file.States.Where( predicate : x => x.Name == iconState )
@@ -75,16 +75,16 @@ namespace GPSTrackerUltimate.Types.Helpers
         {
             try
             {
-                var wb = new WriteableBitmap(pixelWidth : width, pixelHeight : height, dpiX : 96, dpiY : 96, pixelFormat : PixelFormats.Pbgra32, palette : null);
+                WriteableBitmap wb = new WriteableBitmap(pixelWidth : width, pixelHeight : height, dpiX : 96, dpiY : 96, pixelFormat : PixelFormats.Pbgra32, palette : null);
 
-                foreach (var img in images)
+                foreach (BitmapImage img in images)
                 {
                     if (img == null || img.PixelWidth == 0 || img.PixelHeight == 0)
                     {
                         continue;
                     }
 
-                    var rect = new Int32Rect(x : 0, y : 0, width : Math.Min(val1 : width, val2 : img.PixelWidth), height : Math.Min(val1 : height, val2 : img.PixelHeight));
+                    Int32Rect rect = new Int32Rect(x : 0, y : 0, width : Math.Min(val1 : width, val2 : img.PixelWidth), height : Math.Min(val1 : height, val2 : img.PixelHeight));
                     int stride = rect.Width * 4;
                     byte[] pixels = new byte[rect.Height * stride];
 
@@ -116,10 +116,10 @@ namespace GPSTrackerUltimate.Types.Helpers
                 return null;
             }
 
-            var encoder = new PngBitmapEncoder();
+            PngBitmapEncoder encoder = new PngBitmapEncoder();
             encoder.Frames.Add(item : BitmapFrame.Create(source : source));
 
-            using var memoryStream = new MemoryStream();
+            using MemoryStream memoryStream = new MemoryStream();
 
             encoder.Save(stream : memoryStream);
             memoryStream.Position = 0;
@@ -139,13 +139,13 @@ namespace GPSTrackerUltimate.Types.Helpers
             const byte Tolerance = 5;
 
             // Копируем BitmapImage в WriteableBitmap
-            var wb = new WriteableBitmap(original);
+            WriteableBitmap wb = new WriteableBitmap(source : original);
 
             int width = wb.PixelWidth;
             int height = wb.PixelHeight;
             int stride = width * 4;
             byte[] pixels = new byte[height * stride];
-            wb.CopyPixels(pixels, stride, 0);
+            wb.CopyPixels(pixels : pixels, stride : stride, offset : 0);
 
             for (int i = 0; i < pixels.Length; i += 4)
             {
@@ -162,18 +162,18 @@ namespace GPSTrackerUltimate.Types.Helpers
                 }
             }
 
-            var wbTransparent = new WriteableBitmap(width, height, 96, 96, PixelFormats.Pbgra32, null);
-            wbTransparent.WritePixels(new Int32Rect(0, 0, width, height), pixels, stride, 0);
+            WriteableBitmap wbTransparent = new WriteableBitmap(pixelWidth : width, pixelHeight : height, dpiX : 96, dpiY : 96, pixelFormat : PixelFormats.Pbgra32, palette : null);
+            wbTransparent.WritePixels(sourceRect : new Int32Rect(x : 0, y : 0, width : width, height : height), pixels : pixels, stride : stride, offset : 0);
 
             // Конвертируем в BitmapImage
-            var encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(wbTransparent));
+            PngBitmapEncoder encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(item : BitmapFrame.Create(source : wbTransparent));
 
-            using var ms = new MemoryStream();
-            encoder.Save(ms);
+            using MemoryStream ms = new MemoryStream();
+            encoder.Save(stream : ms);
             ms.Position = 0;
 
-            var result = new BitmapImage();
+            BitmapImage result = new BitmapImage();
             result.BeginInit();
             result.CacheOption = BitmapCacheOption.OnLoad;
             result.StreamSource = ms;

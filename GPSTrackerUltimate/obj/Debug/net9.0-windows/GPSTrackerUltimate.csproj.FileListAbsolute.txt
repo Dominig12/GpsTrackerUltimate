@@ -26,3 +26,4 @@ C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltima
 C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\bin\Debug\net9.0-windows\XmpCore.dll
 C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\obj\Debug\net9.0-windows\GPSTrackerUltimate.csproj.AssemblyReference.cache
 C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\obj\Debug\net9.0-windows\GPSTrack.8C971E8D.Up2Date
+C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\obj\Debug\net9.0-windows\GPSTrackerUltimate.sourcelink.json

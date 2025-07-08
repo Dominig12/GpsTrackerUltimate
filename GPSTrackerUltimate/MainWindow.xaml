@@ -7,32 +7,58 @@
     <Window.Resources>
         <gpsTrackerUltimate:GridToPixelConverter x:Key="GridToPixel"/>
     </Window.Resources>
+    
+    <Window.DataContext>
+        <viewModels:MainViewModel />
+    </Window.DataContext>
 
-    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-        <ItemsControl ItemsSource="{Binding (viewModels:MainViewModel.Tiles)}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <Canvas Width="8160" Height="8160"/>
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Прогрессбар -->
+            <RowDefinition Height="*"/>   <!-- Скролл -->
+        </Grid.RowDefinitions>
 
-            <ItemsControl.ItemContainerStyle>
-                <Style>
-                    <Setter Property="Canvas.Left" Value="{Binding X, Converter={StaticResource GridToPixel}}" />
-                    <Setter Property="Canvas.Top" Value="{Binding Y, Converter={StaticResource GridToPixel}}" />
-                </Style>
-            </ItemsControl.ItemContainerStyle>
+        <ProgressBar
+            Grid.Row="0"
+            Height="20"
+            Minimum="0"
+            Maximum="{Binding ProgressBar.ProgressMaximum}"
+            Value="{Binding ProgressBar.ProgressValue}"
+            Margin="5"/>
 
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border Background="Transparent">
-                        <Image Width="32"
-                               Height="32"
-                               Source="{Binding ImageTileCombine}"
-                               IsHitTestVisible="False" />
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-    </ScrollViewer>
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto">
+            <Image Width="8160" Height="8160"
+                   Source="{Binding CombinedMapImage}"
+                   Stretch="None" />
+        </ScrollViewer>
+    </Grid>
+    <!-- <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"> -->
+    <!--     <ItemsControl ItemsSource="{Binding (viewModels:MainViewModel.Tiles)}"> -->
+    <!--         <ItemsControl.ItemsPanel> -->
+    <!--             <ItemsPanelTemplate> -->
+    <!--                 <Canvas Width="8160" Height="8160"/> -->
+    <!--             </ItemsPanelTemplate> -->
+    <!--         </ItemsControl.ItemsPanel> -->
+    <!-- -->
+    <!--         <ItemsControl.ItemContainerStyle> -->
+    <!--             <Style> -->
+    <!--                 <Setter Property="Canvas.Left" Value="{Binding X, Converter={StaticResource GridToPixel}}" /> -->
+    <!--                 <Setter Property="Canvas.Top" Value="{Binding Y, Converter={StaticResource GridToPixel}}" /> -->
+    <!--             </Style> -->
+    <!--         </ItemsControl.ItemContainerStyle> -->
+    <!-- -->
+    <!--         <ItemsControl.ItemTemplate> -->
+    <!--             <DataTemplate> -->
+    <!--                 <Border Background="Transparent"> -->
+    <!--                     <Image Width="32" -->
+    <!--                            Height="32" -->
+    <!--                            Source="{Binding ImageTileCombine}" -->
+    <!--                            IsHitTestVisible="False" /> -->
+    <!--                 </Border> -->
+    <!--             </DataTemplate> -->
+    <!--         </ItemsControl.ItemTemplate> -->
+    <!--     </ItemsControl> -->
+    <!-- </ScrollViewer> -->
 </Window>

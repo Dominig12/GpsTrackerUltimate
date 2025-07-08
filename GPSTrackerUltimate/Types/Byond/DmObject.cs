@@ -13,18 +13,18 @@
         /// </summary>
         public Dictionary<string, string> GetAllResolvedVariables(Dictionary<string, DmObject> allObjects)
         {
-            var resolved = new Dictionary<string, string>();
+            Dictionary<string, string>? resolved = new Dictionary<string, string>();
 
-            if (allObjects.TryGetValue(key : ParentPath, value : out var parent))
+            if (allObjects.TryGetValue(key : ParentPath, value : out DmObject? parent))
             {
-                foreach (var kv in parent.GetAllResolvedVariables(allObjects : allObjects))
+                foreach (KeyValuePair<string, string> kv in parent.GetAllResolvedVariables(allObjects : allObjects))
                 {
                     resolved[key : kv.Key] = kv.Value;
                 }
             }
 
             // Переопределение
-            foreach (var kv in Variables)
+            foreach (KeyValuePair<string, string> kv in Variables)
             {
                 resolved[key : kv.Key] = kv.Value;
             }
