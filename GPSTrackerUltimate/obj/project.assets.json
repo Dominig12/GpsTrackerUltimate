@@ -59,6 +59,32 @@
           "lib/netstandard1.0/_._": {}
         }
       },
+      "Newtonsoft.Json/13.0.3": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/Newtonsoft.Json.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/Newtonsoft.Json.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "OpenDreamByondApi/1.0.0": {
+        "type": "package",
+        "runtimeTargets": {
+          "runtimes/linux-x64/native/libbyond.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/win-x64/native/byondcore.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          }
+        }
+      },
       "SixLabors.ImageSharp/3.1.4": {
         "type": "package",
         "compile": {
@@ -118,6 +144,16 @@
           "lib/netstandard2.0/XmpCore.dll": {
             "related": ".xml"
           }
+        }
+      },
+      "DMCompiler/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "compile": {
+          "bin/placeholder/DMCompiler.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/DMCompiler.dll": {}
         }
       }
     }
@@ -205,6 +241,49 @@
         "runtime.json",
         "useSharedDesignerContext.txt",
         "version.txt"
+      ]
+    },
+    "Newtonsoft.Json/13.0.3": {
+      "sha512": "HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ==",
+      "type": "package",
+      "path": "newtonsoft.json/13.0.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.md",
+        "README.md",
+        "lib/net20/Newtonsoft.Json.dll",
+        "lib/net20/Newtonsoft.Json.xml",
+        "lib/net35/Newtonsoft.Json.dll",
+        "lib/net35/Newtonsoft.Json.xml",
+        "lib/net40/Newtonsoft.Json.dll",
+        "lib/net40/Newtonsoft.Json.xml",
+        "lib/net45/Newtonsoft.Json.dll",
+        "lib/net45/Newtonsoft.Json.xml",
+        "lib/net6.0/Newtonsoft.Json.dll",
+        "lib/net6.0/Newtonsoft.Json.xml",
+        "lib/netstandard1.0/Newtonsoft.Json.dll",
+        "lib/netstandard1.0/Newtonsoft.Json.xml",
+        "lib/netstandard1.3/Newtonsoft.Json.dll",
+        "lib/netstandard1.3/Newtonsoft.Json.xml",
+        "lib/netstandard2.0/Newtonsoft.Json.dll",
+        "lib/netstandard2.0/Newtonsoft.Json.xml",
+        "newtonsoft.json.13.0.3.nupkg.sha512",
+        "newtonsoft.json.nuspec",
+        "packageIcon.png"
+      ]
+    },
+    "OpenDreamByondApi/1.0.0": {
+      "sha512": "vv58n+5fNW+RbwsqU8buIiVr/3d/R7uAkj1inFjXHwmwtiyCuiiDdrX7rk+F+mNWbJZcBmQ0EOFbpLZNWZmpiA==",
+      "type": "package",
+      "path": "opendreambyondapi/1.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "opendreambyondapi.1.0.0.nupkg.sha512",
+        "opendreambyondapi.nuspec",
+        "runtimes/linux-x64/native/libbyond.so",
+        "runtimes/win-x64/native/byondcore.dll"
       ]
     },
     "SixLabors.ImageSharp/3.1.4": {
@@ -299,11 +378,19 @@
         "xmpcore.6.1.10.1.nupkg.sha512",
         "xmpcore.nuspec"
       ]
+    },
+    "DMCompiler/1.0.0": {
+      "type": "project",
+      "path": "../DMCompiler/DMCompiler.csproj",
+      "msbuildProject": "../DMCompiler/DMCompiler.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net9.0-windows7.0": [
-      "DMISharp >= 2.1.0"
+      "DMCompiler >= 1.0.0",
+      "DMISharp >= 2.1.0",
+      "Newtonsoft.Json >= 13.0.3",
+      "OpenDreamByondApi >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -338,7 +425,11 @@
       "frameworks": {
         "net9.0-windows7.0": {
           "targetAlias": "net9.0-windows",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Users\\DaniilAliskandarov\\Documents\\GitHub\\GPSTrackerUltimate\\DMCompiler\\DMCompiler.csproj": {
+              "projectPath": "C:\\Users\\DaniilAliskandarov\\Documents\\GitHub\\GPSTrackerUltimate\\DMCompiler\\DMCompiler.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
@@ -360,6 +451,14 @@
           "DMISharp": {
             "target": "Package",
             "version": "[2.1.0, )"
+          },
+          "Newtonsoft.Json": {
+            "target": "Package",
+            "version": "[13.0.3, )"
+          },
+          "OpenDreamByondApi": {
+            "target": "Package",
+            "version": "[1.0.0, )"
           }
         },
         "imports": [

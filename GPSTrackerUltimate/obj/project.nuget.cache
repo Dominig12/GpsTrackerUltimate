@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "ulxqFRNeWzE=",
+  "dgSpecHash": "6AqO4l3E3ZA=",
   "success": true,
   "projectFilePath": "C:\\Users\\DaniilAliskandarov\\Documents\\GitHub\\GPSTrackerUltimate\\GPSTrackerUltimate\\GPSTrackerUltimate.csproj",
   "expectedPackageFiles": [
@@ -8,6 +8,8 @@
     "C:\\Users\\DaniilAliskandarov\\.nuget\\packages\\dmisharp\\2.1.0\\dmisharp.2.1.0.nupkg.sha512",
     "C:\\Users\\DaniilAliskandarov\\.nuget\\packages\\metadataextractor\\2.8.1\\metadataextractor.2.8.1.nupkg.sha512",
     "C:\\Users\\DaniilAliskandarov\\.nuget\\packages\\microsoft.netcore.platforms\\2.1.2\\microsoft.netcore.platforms.2.1.2.nupkg.sha512",
+    "C:\\Users\\DaniilAliskandarov\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
+    "C:\\Users\\DaniilAliskandarov\\.nuget\\packages\\opendreambyondapi\\1.0.0\\opendreambyondapi.1.0.0.nupkg.sha512",
     "C:\\Users\\DaniilAliskandarov\\.nuget\\packages\\sixlabors.imagesharp\\3.1.4\\sixlabors.imagesharp.3.1.4.nupkg.sha512",
     "C:\\Users\\DaniilAliskandarov\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\4.5.2\\system.runtime.compilerservices.unsafe.4.5.2.nupkg.sha512",
     "C:\\Users\\DaniilAliskandarov\\.nuget\\packages\\system.text.encoding.codepages\\4.5.1\\system.text.encoding.codepages.4.5.1.nupkg.sha512",

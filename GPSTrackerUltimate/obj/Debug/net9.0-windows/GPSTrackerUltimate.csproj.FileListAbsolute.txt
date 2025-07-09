@@ -27,3 +27,12 @@ C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltima
 C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\obj\Debug\net9.0-windows\GPSTrackerUltimate.csproj.AssemblyReference.cache
 C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\obj\Debug\net9.0-windows\GPSTrack.8C971E8D.Up2Date
 C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\obj\Debug\net9.0-windows\GPSTrackerUltimate.sourcelink.json
+C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\obj\Debug\net9.0-windows\App.baml
+C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\bin\Debug\net9.0-windows\DMCompiler.deps.json
+C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\bin\Debug\net9.0-windows\DMCompiler.runtimeconfig.json
+C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\bin\Debug\net9.0-windows\DMCompiler.exe
+C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\bin\Debug\net9.0-windows\DMCompiler.dll
+C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\bin\Debug\net9.0-windows\DMCompiler.pdb
+C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\bin\Debug\net9.0-windows\runtimes\linux-x64\native\libbyond.so
+C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\bin\Debug\net9.0-windows\runtimes\win-x64\native\byondcore.dll
+C:\Users\DaniilAliskandarov\Documents\GitHub\GPSTrackerUltimate\GPSTrackerUltimate\bin\Debug\net9.0-windows\Newtonsoft.Json.dll

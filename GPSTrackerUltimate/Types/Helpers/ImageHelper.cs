@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Concurrent;
+using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -13,8 +14,28 @@ namespace GPSTrackerUltimate.Types.Helpers
     public static class ImageHelper
     {
 
-        public static async Task<BitmapImage> GetIconDmi(string icon, string iconState, StateDirection direction)
+        private static ConcurrentDictionary<string, BitmapImage?> Icons = new ConcurrentDictionary<string, BitmapImage?>();
+
+        private static string GetKey(
+            string icon,
+            string iconState,
+            StateDirection direction )
         {
+            return $"{icon}_{iconState}_{direction}";
+        }
+        
+        public static async Task<BitmapImage?> GetIconDmi(string icon, string iconState, StateDirection direction)
+        {
+            string key = GetKey(
+                icon : icon,
+                iconState : iconState,
+                direction : direction );
+            if ( ImageHelper.Icons.ContainsKey(
+                    key :key ) )
+            {
+                return ImageHelper.Icons[key : key ].Clone();
+            }
+            
             try
             {
                 using DMIFile file = new DMIFile(
@@ -26,13 +47,13 @@ namespace GPSTrackerUltimate.Types.Helpers
                 if ( state.Count == 0 )
                 {
                     Console.WriteLine(value : $"[ERROR] No state for icon {icon} {iconState} {direction}" );
-                    return new BitmapImage();
+                    return null;
                 }
 
                 if ( state[index : 0].Frames == 0 )
                 {
                     Console.WriteLine(value : $"[ERROR] No frames for icon {icon} {iconState} {direction}" );
-                    return new BitmapImage();
+                    return null;
                 }
 
                 Image<Rgba32>? frame = null;
@@ -49,7 +70,7 @@ namespace GPSTrackerUltimate.Types.Helpers
                 if ( frame == null )
                 {
                     Console.WriteLine(value : $"[ERROR] Failed to get frame for icon {icon} {iconState} {direction}" );
-                    return new BitmapImage();
+                    return null;
                 }
             
                 using MemoryStream ms = new MemoryStream();
@@ -62,12 +83,18 @@ namespace GPSTrackerUltimate.Types.Helpers
                 iconBit.StreamSource = ms;
                 iconBit.EndInit();
 
-                return ImageHelper.MakeWhitePixelsTransparent(original : iconBit);
+                BitmapImage? result = ImageHelper.MakeWhitePixelsTransparent( original : iconBit );
+                
+                ImageHelper.Icons.TryAdd(
+                    key : key,
+                    value : result );
+
+                return result;
             }
             catch ( Exception e )
             {
                 Console.WriteLine(value : $"[ERROR] Failed to get icon {icon} {iconState} {direction} {e.ToString()}" );
-                return new BitmapImage();
+                return null;
             }
         }
         
@@ -134,7 +161,7 @@ namespace GPSTrackerUltimate.Types.Helpers
 
         }
         
-        public static BitmapImage MakeWhitePixelsTransparent(BitmapImage original)
+        public static BitmapImage? MakeWhitePixelsTransparent(BitmapImage original)
         {
             const byte Tolerance = 5;
 
@@ -173,7 +200,7 @@ namespace GPSTrackerUltimate.Types.Helpers
             encoder.Save(stream : ms);
             ms.Position = 0;
 
-            BitmapImage result = new BitmapImage();
+            BitmapImage? result = new BitmapImage();
             result.BeginInit();
             result.CacheOption = BitmapCacheOption.OnLoad;
             result.StreamSource = ms;

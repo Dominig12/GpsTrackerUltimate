@@ -10,6 +10,12 @@
 
 	<ItemGroup>
 	  <PackageReference Include="DMISharp" Version="2.1.0" />
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	  <PackageReference Include="OpenDreamByondApi" Version="1.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\DMCompiler\DMCompiler.csproj" />
 	</ItemGroup>
 
 </Project>

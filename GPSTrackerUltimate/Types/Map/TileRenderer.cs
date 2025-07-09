@@ -7,6 +7,7 @@ using DMISharp;
 using GPSTrackerUltimate.Types.Byond;
 using GPSTrackerUltimate.Types.Enum;
 using GPSTrackerUltimate.Types.Helpers;
+using Newtonsoft.Json;
 
 namespace GPSTrackerUltimate.Types.Map
 {
@@ -22,7 +23,7 @@ namespace GPSTrackerUltimate.Types.Map
         {
             tile.TileContent.Clear();
 
-            List<BitmapImage> images = new List<BitmapImage>();
+            List<BitmapImage?> images = new List<BitmapImage?>();
 
             foreach (KeyValuePair<int, string> kv in tile.PathContent.OrderByDescending(keySelector : p => p.Key))
             {
@@ -34,13 +35,14 @@ namespace GPSTrackerUltimate.Types.Map
                     continue;
                 }
 
-                (DmObject Obj, Dictionary<string, string> ResolvedVars)? objResult = DmParser.FindObjectWithResolvedVars(typePath : typePath, allObjects : allObjects);
-                if (objResult == null)
+                if ( !allObjects.TryGetValue(
+                        key : typePath,
+                        value : out DmObject? objResult ) )
                 {
                     continue;
                 }
 
-                (_, Dictionary<string, string> vars) = objResult.Value;
+                Dictionary<string, string> vars = objResult.ResolvedVariables;
 
                 // === Ищем переопределения, если есть ===
                 string icon = vars.TryGetValue(key : "icon", value : out string? iconVal) ? iconVal.Trim(trimChar : '\'') : string.Empty;
@@ -73,13 +75,13 @@ namespace GPSTrackerUltimate.Types.Map
                 // === Проверка ===
                 if (string.IsNullOrWhiteSpace(value : icon))
                 {
-                    Console.WriteLine(value : $"[WARN] Не найдена icon для {typePath}");
+                    Console.WriteLine(value : $"[WARN] Не найдена icon для {typePath} {JsonConvert.SerializeObject(vars)}");
                     continue;
                 }
 
                 if (string.IsNullOrWhiteSpace(value : iconState))
                 {
-                    Console.WriteLine(value : $"[WARN] Не найден icon_state для {typePath}");
+                    Console.WriteLine(value : $"[WARN] Не найден icon_state для {typePath} {JsonConvert.SerializeObject(vars)}");
                     continue;
                 }
                 
@@ -88,13 +90,18 @@ namespace GPSTrackerUltimate.Types.Map
                 // === Загрузка изображения ===
                 try
                 {
-                    BitmapImage image = await ImageHelper.GetIconDmi(icon : icon, iconState : iconState, direction : ConverterDirection.ConvertByondDirToDmi( dir : directionE ));
+                    BitmapImage? image = await ImageHelper.GetIconDmi(icon : icon, iconState : iconState, direction : ConverterDirection.ConvertByondDirToDmi( dir : directionE ));
+
+                    if ( image == null )
+                    {
+                        continue;
+                    }
                     tile.TileContent[key : layer] = image;
                     images.Add(item : image);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(value : $"[ERROR] Ошибка при загрузке иконки {icon}:{iconState} — {ex.Message}");
+                    Console.WriteLine(value : $"[ERROR] Ошибка при загрузке иконки {icon}:{iconState} — {ex.Message} {JsonConvert.SerializeObject(vars)}");
                 }
             }
 
@@ -111,7 +118,7 @@ namespace GPSTrackerUltimate.Types.Map
                 {
                     tooltipBuilder.AppendLine(handler : $"{typePath}");
 
-                    foreach ((string key, string val) in obj.GetAllResolvedVariables(allObjects : allObjects))
+                    foreach ((string key, string val) in obj.ResolvedVariables)
                     {
                         tooltipBuilder.AppendLine(handler : $"  {key} = {val}");
                     }
@@ -126,38 +133,32 @@ namespace GPSTrackerUltimate.Types.Map
         /// <summary>
         /// Комбинирует изображения в один BitmapImage
         /// </summary>
-        public static BitmapImage? CombineImages(IEnumerable<BitmapImage> images)
+        public static BitmapImage CombineImages(IEnumerable<BitmapImage?> images)
         {
             const int size = 32;
+            var imgs = images.Where(img => img != null).ToList();
+
+            if (imgs.Count == 0) 
+                return null!; // или можно вернуть пустую картинку, или бросить исключение
 
             DrawingVisual drawingVisual = new DrawingVisual();
             using (DrawingContext context = drawingVisual.RenderOpen())
             {
-                foreach (BitmapImage img in images)
+                foreach (var img in imgs)
                 {
-                    try
-                    {
-                        if (img == null || img.PixelWidth == 0 || img.PixelHeight == 0)
-                        {
-                            continue;
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        continue;
-                    }
-                    context.DrawImage(imageSource : img, rectangle : new Rect(x : 0, y : 0, width : size, height : size));
+                    // Все картинки рисуем в один и тот же прямоугольник (0,0,size,size)
+                    context.DrawImage(img, new Rect(0, 0, size, size));
                 }
             }
 
-            RenderTargetBitmap rtb = new RenderTargetBitmap(pixelWidth : size, pixelHeight : size, dpiX : 96, dpiY : 96, pixelFormat : PixelFormats.Pbgra32);
-            rtb.Render(visual : drawingVisual);
+            RenderTargetBitmap rtb = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
+            rtb.Render(drawingVisual);
 
-            // Преобразуем в BitmapImage
             PngBitmapEncoder encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(item : BitmapFrame.Create(source : rtb));
+            encoder.Frames.Add(BitmapFrame.Create(rtb));
+
             using MemoryStream stream = new MemoryStream();
-            encoder.Save(stream : stream);
+            encoder.Save(stream);
             stream.Position = 0;
 
             BitmapImage final = new BitmapImage();

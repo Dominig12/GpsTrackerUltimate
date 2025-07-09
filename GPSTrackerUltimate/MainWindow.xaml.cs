@@ -27,13 +27,33 @@ namespace GPSTrackerUltimate;
 public partial class MainWindow : Window
 {
 
+    public MainViewModel MainViewModal { get; set; } 
     public MainWindow()
     {
         InitializeComponent();
-        MainViewModel model = new MainViewModel();
-        DataContext = model;
+        MainViewModal = new MainViewModel();
+        DataContext = MainViewModal;
 
-        Loaded += async (_, _) => await model.LoadMapAsync();
+        Loaded += async (_, _) => await MainViewModal.LoadMapAsync();
+    }
+
+    private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.AddedItems.Count > 0 && e.AddedItems[index : 0] is Tile selectedTile)
+        {
+            double offsetX = selectedTile.X * 32 - MapScrollViewer.ViewportWidth / 2;
+            double offsetY = selectedTile.Y * 32 - MapScrollViewer.ViewportHeight / 2;
+
+            MapScrollViewer.ScrollToHorizontalOffset(offset : offsetX);
+            MapScrollViewer.ScrollToVerticalOffset(offset : offsetY);
+        }
+    }
+
+    private void SearchTilesByName(
+        object sender,
+        RoutedEventArgs e )
+    {
+        MainViewModal.SearchTilesByName(  );
     }
 
 }

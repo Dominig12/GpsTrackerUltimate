@@ -3,8 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:GPSTrackerUltimate"
              xmlns:primitives="clr-namespace:System.Windows.Controls.Ribbon.Primitives;assembly=System.Windows.Controls.Ribbon"
+             xmlns:converters="clr-namespace:GPSTrackerUltimate.Types.Converters"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:OffsetConverter x:Key="OffsetConverter" />
     </Application.Resources>
 </Application>

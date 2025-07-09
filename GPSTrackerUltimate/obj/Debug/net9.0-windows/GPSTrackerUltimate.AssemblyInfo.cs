@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GPSTrackerUltimate")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c05dcbf8fea1cf577a83deb27c2e6bda952c8ff2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+232aba6bb1cd2761a08f6e36267107126e223a23")]
 [assembly: System.Reflection.AssemblyProductAttribute("GPSTrackerUltimate")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GPSTrackerUltimate")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

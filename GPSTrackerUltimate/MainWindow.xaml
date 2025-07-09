@@ -13,27 +13,94 @@
     </Window.DataContext>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <!-- Прогрессбар -->
-            <RowDefinition Height="*"/>   <!-- Скролл -->
-        </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" /> <!-- Левая часть: карта + прогресс -->
+        <ColumnDefinition Width="300" /> <!-- Правая часть: поиск -->
+    </Grid.ColumnDefinitions>
 
+    <!-- Левая часть: карта и прогресс -->
+    <DockPanel Grid.Column="0">
+
+        <!-- Прогрессбар -->
         <ProgressBar
-            Grid.Row="0"
             Height="20"
             Minimum="0"
             Maximum="{Binding ProgressBar.ProgressMaximum}"
             Value="{Binding ProgressBar.ProgressValue}"
-            Margin="5"/>
+            Margin="5"
+            DockPanel.Dock="Top" />
 
-        <ScrollViewer Grid.Row="1"
-                      HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Auto">
-            <Image Width="8160" Height="8160"
-                   Source="{Binding CombinedMapImage}"
-                   Stretch="None" />
+        <!-- Карта со скроллом -->
+        <ScrollViewer Name="MapScrollViewer"
+            HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      Margin="5"
+                      CanContentScroll="False">
+            <Canvas Width="{Binding MapPixelWidth}"
+                    Height="{Binding MapPixelHeight}">
+                <!-- Основное изображение -->
+                <Image Source="{Binding CombinedMapImage}"
+                       Width="{Binding MapPixelWidth}"
+                       Height="{Binding MapPixelHeight}" />
+
+                <!-- Кружки -->
+                <ItemsControl ItemsSource="{Binding Tiles}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Ellipse Width="20" Height="20"
+                                     Fill="White" Stroke="LawnGreen" StrokeThickness="1"
+                                     Visibility="{Binding IsHighlighted, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left">
+                                <Setter.Value>
+                                    <MultiBinding Converter="{StaticResource OffsetConverter}" ConverterParameter="X">
+                                        <Binding Path="X"/>
+                                        <Binding Path="Y"/>
+                                    </MultiBinding>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter Property="Canvas.Top">
+                                <Setter.Value>
+                                    <MultiBinding Converter="{StaticResource OffsetConverter}" ConverterParameter="Y">
+                                        <Binding Path="X"/>
+                                        <Binding Path="Y"/>
+                                    </MultiBinding>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                </ItemsControl>
+            </Canvas>
         </ScrollViewer>
-    </Grid>
+    </DockPanel>
+
+    <!-- Правая часть: Поиск -->
+    <StackPanel Grid.Column="1" Margin="5">
+
+        <!-- Поисковая строка + кнопка -->
+        <DockPanel Margin="0,0,0,5">
+            <TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}" Width="200" />
+            <Button Content="Поиск" Click="SearchTilesByName" Margin="5,0,0,0" />
+        </DockPanel>
+
+        <!-- Список результатов -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ListBox ItemsSource="{Binding SearchResults}"
+                     DisplayMemberPath="NameContent[0]"
+                     SelectionChanged="ListBox_SelectionChanged"
+                     Height="400"
+                     Margin="0,5,0,0"/>
+        </ScrollViewer>
+    </StackPanel>
+</Grid>
     <!-- <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"> -->
     <!--     <ItemsControl ItemsSource="{Binding (viewModels:MainViewModel.Tiles)}"> -->
     <!--         <ItemsControl.ItemsPanel> -->

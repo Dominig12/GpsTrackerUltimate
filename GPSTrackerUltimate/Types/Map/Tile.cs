@@ -17,13 +17,24 @@ namespace GPSTrackerUltimate.Types.Map
         
         public int Z { get; set; }
 
-        public Dictionary<int, BitmapImage> TileContent { get; set; } = new Dictionary<int, BitmapImage>();
+        public Dictionary<int, BitmapImage?> TileContent { get; set; } = new Dictionary<int, BitmapImage?>();
 
         public Dictionary<int, string> PathContent { get; set; } = new Dictionary<int, string>();
         
         public List<string> NameContent { get; set; } = new List<string>();
         
         public Dictionary<string, string> PathOverrides { get; set; } = new();
+        
+        private bool _isHighlighted;
+        public bool IsHighlighted
+        {
+            get => _isHighlighted;
+            set
+            {
+                _isHighlighted = value;
+                OnPropertyChanged(nameof(IsHighlighted));
+            }
+        }
         
         private string _tooltipText = string.Empty;
         public string ToolTipText
@@ -48,7 +59,6 @@ namespace GPSTrackerUltimate.Types.Map
                 if (_imageTileCombine != value)
                 {
                     _imageTileCombine = value;
-                    OnPropertyChanged(propertyName : nameof(ImageTileCombine));
                 }
             }
         }

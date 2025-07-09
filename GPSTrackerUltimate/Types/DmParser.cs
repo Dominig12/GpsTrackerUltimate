@@ -1,134 +1,183 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using GPSTrackerUltimate.Types.Byond;
 
-namespace GPSTrackerUltimate.Types
+public static class DmParser
 {
+    private static readonly Regex CommentsInLine = new(@"//(?=(?:[^""]*""[^""]*"")*[^""]*$).*", RegexOptions.Compiled);
+    private static readonly Regex CommentsMultiline = new(@"/\*[\s\S]*?\*/", RegexOptions.Compiled);
+    private static readonly Regex FullBlock = new Regex(
+        @"^(/[^()\r\n]+)[\r\n]+((?:^[ \t]+.*[\r\n]*)*)",
+        RegexOptions.Multiline | RegexOptions.Compiled);
 
-    public static class DmParser
+    private static readonly Regex VariableRegex = new Regex(
+        @"^[ \t]*([a-zA-Z0-9_/]+)\s*=\s*(.+)$",
+        RegexOptions.Multiline | RegexOptions.Compiled);
+    public static Dictionary<string, DmObject> ParseObjectsFromFiles(IEnumerable<string> filePaths)
     {
-        private static readonly Regex ObjectHeaderRegex = new(pattern : @"^/([a-zA-Z0-9_/]+)$", options : RegexOptions.Compiled);
-        private static readonly Regex VariableAssignmentRegex = new(pattern : @"^([a-zA-Z0-9_/]+)\s*=\s*(.+)$", options : RegexOptions.Compiled);
+        var allObjects = new Dictionary<string, DmObject>();
 
-        /// <summary>
-        /// Парсит все объекты с построением дерева
-        /// </summary>
-        public static Dictionary<string, DmObject> ParseObjectsFromFiles(IEnumerable<string> dmFilePaths)
+        foreach (var file in filePaths)
         {
-            Dictionary<string, DmObject>? allObjects = new Dictionary<string, DmObject>();
-            DmObject? current = null;
+            var fileContent = File.ReadAllText(file);
 
-            foreach (string? file in dmFilePaths)
+            fileContent = CommentsMultiline.Replace(fileContent, "");
+            fileContent = CommentsInLine.Replace(fileContent, "");
+
+            var matches = FullBlock.Matches(fileContent);
+
+            foreach (Match match in matches)
             {
-                string[]? lines = File.ReadAllLines(path : file);
+                string objectPath = match.Groups[1].Value.Trim();
+                string body = match.Groups[2].Value;
 
-                foreach (string? rawLine in lines)
+                // Определяем родителя
+                string parentPath = "/";
+                var parts = objectPath.Split('/');
+                if (parts.Length > 2)
+                    parentPath = "/" + string.Join("/", parts.Skip(1).Take(parts.Length - 2));
+
+                if (!allObjects.TryGetValue(objectPath, out var obj))
                 {
-                    string? line = rawLine.Trim();
-
-                    if (string.IsNullOrWhiteSpace(value : line) || line.StartsWith(value : "//"))
+                    obj = new DmObject
                     {
+                        Path = objectPath,
+                        ParentPath = parentPath
+                    };
+                    allObjects[objectPath] = obj;
+                }
+                else
+                {
+                    obj.ParentPath = parentPath;
+                }
+
+                var varMatches = VariableRegex.Matches(body);
+                foreach (Match vm in varMatches)
+                {
+                    string varName = vm.Groups[1].Value.Trim();
+                    if (varName.StartsWith("var/"))
+                        varName = varName.Substring(4);
+
+                    string varValue = vm.Groups[2].Value.Trim().TrimEnd(';').Trim();
+                    varValue = RemoveCommentOutsideQuotes(varValue);
+
+                    if (Regex.IsMatch(varValue, @"^\w+\s*\(.*\)$"))
                         continue;
-                    }
 
-                    if (line.StartsWith(value : "/"))
-                    {
-                        string[]? tokens = line.Split(separator : new[] { ' ', '\t', '(', '=', ':', ';' }, options : StringSplitOptions.RemoveEmptyEntries);
-                        if (tokens.Length == 0)
-                        {
-                            continue;
-                        }
-
-                        string? potentialPath = tokens[0];
-
-                        if (ObjectHeaderRegex.IsMatch(input : potentialPath))
-                        {
-                            string? fullPath = potentialPath;
-                            string? parent = "/" + string.Join(separator : "/", values : fullPath.Split(separator : '/').Skip(count : 1).SkipLast(count : 1));
-
-                            if (allObjects.TryGetValue(key : fullPath, value : out DmObject? existing))
-                            {
-                                // Добавляем или перезаписываем переменные
-                                current = existing;
-                                current.ParentPath = parent; // убедимся, что родитель правильный (вдруг другой файл точнее)
-                            }
-                            else
-                            {
-                                current = new DmObject
-                                {
-                                    Path = fullPath,
-                                    ParentPath = parent
-                                };
-                                allObjects[key : fullPath] = current;
-                            }
-
-                            continue;
-                        }
-                    }
-
-                    if (current != null)
-                    {
-                        Match? match = VariableAssignmentRegex.Match(input : line);
-                        if (match.Success)
-                        {
-                            string? name = match.Groups[groupnum : 1].Value.Trim();
-                            string? rawValue = match.Groups[groupnum : 2].Value.Trim().TrimEnd(trimChar : ';');
-
-// Удаляем комментарии, если они не внутри строки
-                            int commentIndex = rawValue.IndexOf(value : "//");
-                            if (commentIndex >= 0)
-                            {
-                                // Убедимся, что // не находится внутри кавычек
-                                bool insideQuotes = false;
-                                for (int i = 0; i < commentIndex; i++)
-                                {
-                                    if (rawValue[index : i] == '"')
-                                    {
-                                        insideQuotes = !insideQuotes;
-                                    }
-                                }
-
-                                if (!insideQuotes)
-                                {
-                                    rawValue = rawValue.Substring(startIndex : 0, length : commentIndex).TrimEnd();
-                                }
-                            }
-
-                            current.Variables[key : name] = rawValue;
-                        }
-                    }
+                    obj.Variables[varName] = varValue;
                 }
-
-                current = null;
             }
+        }
+        
+        // --- Новый блок для создания промежуточных объектов ---
 
-            // Построение дерева
-            foreach (DmObject? obj in allObjects.Values)
+        var allPaths = allObjects.Keys.ToList();
+        foreach (var path in allPaths)
+        {
+            var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            for (int depth = 1; depth < parts.Length; depth++)
             {
-                if (allObjects.TryGetValue(key : obj.ParentPath, value : out DmObject? parent))
+                string parentPath = "/" + string.Join("/", parts.Take(depth));
+                string childPath = "/" + string.Join("/", parts.Take(depth + 1));
+
+                if (!allObjects.ContainsKey(parentPath))
                 {
-                    parent.Children.Add(item : obj);
+                    // Создаем промежуточный объект с пустыми переменными и ParentPath
+                    string grandParentPath = "/";
+                    if (depth > 1)
+                        grandParentPath = "/" + string.Join("/", parts.Take(depth - 1));
+
+                    var intermediate = new DmObject
+                    {
+                        Path = parentPath,
+                        ParentPath = grandParentPath
+                    };
+                    allObjects[parentPath] = intermediate;
                 }
             }
-
-            return allObjects;
+        }
+        
+        // --- Построение дерева детей ---
+        foreach (var obj in allObjects.Values)
+        {
+            if (!string.IsNullOrEmpty(obj.ParentPath) && allObjects.TryGetValue(obj.ParentPath, out var parent))
+                parent.Children[obj.Path] = obj;
         }
 
-        /// <summary>
-        /// Находит объект по пути и возвращает его с унаследованными параметрами
-        /// </summary>
-        public static (DmObject Obj, Dictionary<string, string> ResolvedVars)? FindObjectWithResolvedVars(
-            string typePath,
-            Dictionary<string, DmObject> allObjects)
+        ResolveAllVariablesIteratively(allObjects);
+        return allObjects;
+    }
+
+    private static string RemoveCommentOutsideQuotes(string line)
+    {
+        int commentIndex = line.IndexOf("//");
+        while (commentIndex >= 0)
         {
-            if (allObjects.TryGetValue(key : typePath, value : out DmObject? obj))
+            if (!IsInsideQuotes(line, commentIndex))
             {
-                Dictionary<string, string>? vars = obj.GetAllResolvedVariables(allObjects : allObjects);
-                return (obj, vars);
+                line = line.Substring(0, commentIndex).TrimEnd();
+                break;
+            }
+            commentIndex = line.IndexOf("//", commentIndex + 2);
+        }
+        return line;
+    }
+
+    private static void ResolveAllVariablesIteratively(Dictionary<string, DmObject> allObjects)
+    {
+        var resolved = new HashSet<string>();
+        var queue = new Queue<DmObject>();
+
+        // Находим все корни (без родителя или с несуществующим родителем)
+        foreach (var obj in allObjects.Values)
+        {
+            if (string.IsNullOrEmpty(obj.ParentPath) || !allObjects.ContainsKey(obj.ParentPath))
+                queue.Enqueue(obj);
+        }
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+
+            if (!string.IsNullOrEmpty(current.ParentPath) &&
+                allObjects.TryGetValue(current.ParentPath, out var parent) &&
+                !resolved.Contains(parent.Path))
+            {
+                queue.Enqueue(current);
+                continue;
             }
 
-            return null;
+            var resolvedVars = new Dictionary<string, string>();
+
+            if (!string.IsNullOrEmpty(current.ParentPath) &&
+                allObjects.TryGetValue(current.ParentPath, out parent))
+            {
+                foreach (var kv in parent.ResolvedVariables)
+                    resolvedVars[kv.Key] = kv.Value;
+            }
+
+            foreach (var kv in current.Variables)
+                resolvedVars[kv.Key] = kv.Value;
+
+            current.ResolvedVariables = resolvedVars;
+            resolved.Add(current.Path);
+
+            foreach (var child in current.Children.Values)
+                queue.Enqueue(child);
         }
     }
 
+    private static bool IsInsideQuotes(string text, int index)
+    {
+        bool inside = false;
+        for (int i = 0; i < index; i++)
+        {
+            if (text[i] == '"')
+                inside = !inside;
+        }
+        return inside;
+    }
 }

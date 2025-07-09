@@ -14,6 +14,8 @@ using GPSTrackerUltimate.Types.Byond;
 using GPSTrackerUltimate.Types.Map;
 using GPSTrackerUltimate.Types.Object;
 using SixLabors.ImageSharp;
+using DMCompiler;
+using DMCompiler.Compiler.DM;
 
 namespace GPSTrackerUltimate.ViewModels
 {
@@ -24,6 +26,12 @@ namespace GPSTrackerUltimate.ViewModels
         public ObservableCollection<Tile> Tiles { get; set; }
         public WriteableBitmap CombinedMapImage { get; set; }
         public ProgressBarInfo ProgressBar { get; set; }
+        public string SearchQuery  { get; set; } = string.Empty;
+        
+        public ObservableCollection<Tile> SearchResults { get; set; } = new();
+        
+        public int MapPixelWidth => 255*32;
+        public int MapPixelHeight => 255*32;
         
         public MainViewModel()
         {
@@ -43,8 +51,8 @@ namespace GPSTrackerUltimate.ViewModels
             }
 
             InitBitmap(
-                width : 256 * 32,
-                height : 256 * 32 );
+                width : 255 * 32,
+                height : 255 * 32 );
         }
         
         public void InitBitmap(int width, int height)
@@ -93,7 +101,7 @@ namespace GPSTrackerUltimate.ViewModels
         public async Task RenderTilesFastQueuedAsync(Dictionary<string, DmObject> allObjects)
         {
             int tileSize = 32;
-            int threadCount = Environment.ProcessorCount;
+            int threadCount = Environment.ProcessorCount - 1;
 
             ConcurrentQueue<Tile> queue = new ConcurrentQueue<Tile>(collection : Tiles);
             ConcurrentBag<Tile> renderedTiles = new ConcurrentBag<Tile>();
@@ -109,12 +117,13 @@ namespace GPSTrackerUltimate.ViewModels
                     while (queue.TryDequeue(result : out Tile? tile))
                     {
                         await TileRenderer.ProcessTileAsync(tile : tile, allObjects : allObjects);
+                        
                         // renderedTiles.Add(item : tile);
                         _ = TileRenderer.DrawImageOnWriteableBitmap(
                             target: CombinedMapImage,
                             source: tile.ImageTileCombine,
-                            x: tile.X * tileSize,
-                            y: tile.Y * tileSize);
+                            x: (tile.X-1) * tileSize,
+                            y: (tile.Y-1) * tileSize);
                         ProgressBar.Increment();
                     }
                 }));
@@ -147,17 +156,40 @@ namespace GPSTrackerUltimate.ViewModels
             List<string> dmFiles = DmeParser.ParseIncludedDmFiles( dmePath : dmePath );
 
             // 2. Парсим все объекты
-            Dictionary<string, DmObject> allObjects = DmParser.ParseObjectsFromFiles( dmFilePaths : dmFiles );
-
-            (DmObject Obj, Dictionary<string, string> ResolvedVars)? vars = DmParser.FindObjectWithResolvedVars(
-                typePath : "/obj/structure/object_wall/mining",
-                allObjects : allObjects );
+            Dictionary<string, DmObject> allObjects = DmParser.ParseObjectsFromFiles(  filePaths : dmFiles );
+            
+            allObjects.TryGetValue("/obj/structure/stool/bed/chair/metal", out DmObject? obj);
             
             await Task.Run(
                 function : async () =>
                 {
                     await RenderTilesFastQueuedAsync(allObjects : allObjects);
                 } );
+        }
+
+        public void SearchTilesByName()
+        {
+            SearchResults.Clear();
+
+            if ( string.IsNullOrWhiteSpace( SearchQuery ) )
+            {
+                foreach (var tile in Tiles)
+                {
+                    tile.IsHighlighted = false;
+                }
+                return;
+            }
+    
+            foreach (var tile in Tiles)
+            {
+                tile.IsHighlighted = false;
+
+                if (tile.NameContent.Any(name => name.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase)))
+                {
+                    tile.IsHighlighted = true;
+                    SearchResults.Add(tile);
+                }
+            }
         }
 
     }
